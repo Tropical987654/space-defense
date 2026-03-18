@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ULTRA DEFENSE MOBILE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap');
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; color: #fff; touch-action: none; }
+        #game-container { position: relative; width: 100%; height: 100%; overflow: hidden; background: radial-gradient(circle at center, #050515 0%, #000 100%); }
+        .star { position: absolute; background: #fff; border-radius: 50%; opacity: 0.5; }
+        .screen { position: absolute; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); text-align: center; }
+        .hidden { display: none; }
+        #title { font-size: 10vw; color: #0ff; text-shadow: 0 0 20px #0ff; margin-bottom: 20px; }
+        .grid { display: flex; flex-direction: column; gap: 15px; width: 80%; }
+        .card { padding: 20px; background: rgba(0,255,255,0.1); border: 2px solid #0ff; border-radius: 15px; cursor: pointer; font-size: 18px; }
+        #player { position: absolute; width: 50px; height: 50px; z-index: 10; filter: drop-shadow(0 0 10px #0ff); }
+        .bullet { position: absolute; width: 4px; height: 20px; background: #0ff; box-shadow: 0 0 10px #0ff; border-radius: 2px; }
+        .enemy { position: absolute; width: 40px; height: 40px; filter: drop-shadow(0 0 8px #f06); }
+        #hud { position: absolute; top: 10px; left: 10px; z-index: 50; font-size: 12px; pointer-events: none; }
+        .bar { width: 150px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; margin: 5px 0; }
+        #hp-fill { height: 100%; background: #0ff; width: 100%; transition: 0.3s; }
+        /* Зоны управления для телефона */
+        #touch-left { position: absolute; left: 0; top: 0; width: 50%; height: 100%; z-index: 20; }
+        #touch-right { position: absolute; right: 0; top: 0; width: 50%; height: 100%; z-index: 20; }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="hud">
+            HP: <span id="hp-val">500</span>
+            <div class="bar"><div id="hp-fill"></div></div>
+            SCORE: <span id="sc">0</span> | KILLS: <span id="kl">0</span>
+        </div>
+
+        <div id="touch-left"></div>
+        <div id="touch-right"></div>
+
+        <div id="m-screen" class="screen">
+            <div id="title">SPACE DEFENSE</div>
+            <div class="grid">
+                <div class="card" onclick="init(1.2, 0.08, 500)">NEBULA (ЛЕГКО)</div>
+                <div class="card" onclick="init(3, 0.05, 250)">VOID (СРЕДНЕ)</div>
+                <div class="card" onclick="init(6, 0.15, 100)">NOVA (АД)</div>
+            </div>
+        </div>
+
+        <div id="u-screen" class="screen hidden">
+            <h2 style="color:#f0f">UPGRADE</h2>
+            <div id="u-grid" class="grid"></div>
+        </div>
+
+        <div id="player" style="display:none">
+            <svg viewBox="0 0 50 50"><path d="M25 5 L45 40 L25 32 L5 40 Z" fill="none" stroke="#0ff" stroke-width="3"/></svg>
+        </div>
+    </div>
+
+    <script>
+        const cont = document.getElementById('game-container');
+        const pool = [
+            {n:"Rapid Fire", d:"Быстрее стрельба", f:()=>g.fr=Math.max(80, g.fr-70)},
+            {n:"Multi-Shot", d:"+1 Пуля", f:()=>g.ms++},
+            {n:"Repair", d:"Ремонт базы", f:()=>g.hp=Math.min(g.mH, g.hp+150)},
+            {n:"Power", d:"Урон + очки", f:()=>g.mult+=1}
+        ];
+
+        let g = { active: false, sc: 0, kl: 0, hp: 500, mH: 500, fr: 400, ms: 1, spd: 1, spawn: 0.05, mult: 1 };
+        let px = window.innerWidth/2, bls = [], ens = [], lastF = 0, move = 0;
+
+        // Управление для ПК и ТЕЛЕФОНА
+        window.addEventListener('keydown', e => { if(e.code==='KeyA') move = -1; if(e.code==='KeyD') move = 1; });
+        window.addEventListener('keyup', () => move = 0);
+        
+        document.getElementById('touch-left').ontouchstart = () => move = -1;
+        document.getElementById('touch-right').ontouchstart = () => move = 1;
+        document.getElementById('touch-left').ontouchend = document.getElementById('touch-right').ontouchend = () => move = 0;
+
+        function init(s, sw, hp) {
+            g.spd = s; g.spawn = sw; g.hp = g.mH = hp;
+            document.getElementById('m-screen').classList.add('hidden');
+            document.getElementById('player').style.display = 'block';
+            g.active = true; loop();
+        }
+
+        function showUpgrades() {
+            g.active = false;
+            const ugrid = document.getElementById('u-grid');
+            ugrid.innerHTML = '';
+            pool.sort(()=>Math.random()-0.5).slice(0,3).forEach(u => {
+                const d = document.createElement('div');
+                d.className = 'card';
+                d.innerHTML = `<b>${u.n}</b><br><small>${u.d}</small>`;
+                d.onclick = () => { u.f(); document.getElementById('u-screen').classList.add('hidden'); g.active=true; loop(); };
+                ugrid.appendChild(d);
+            });
+            document.getElementById('u-screen').classList.remove('hidden');
+        }
+
+        function loop() {
+            if(!g.active) return;
+            
+            // Движение
+            px += move * 10;
+            if(px < 0) px = 0; if(px > window.innerWidth-50) px = window.innerWidth-50;
+            document.getElementById('player').style.left = px + 'px';
+            document.getElementById('player').style.top = (window.innerHeight - 100) + 'px';
+
+            // Авто-стрельба
+            let now = Date.now();
+            if(now - lastF > g.fr) {
+                for(let i=0; i<g.ms; i++) {
+                    const b = document.createElement('div');
+                    b.className = 'bullet';
+                    b.x = px + 23 + (i-(g.ms-1)/2)*15; b.y = window.innerHeight-110;
+                    cont.appendChild(b); bls.push(b);
+                }
+                lastF = now;
+            }
+
+            bls.forEach((b, i) => {
+                b.y -= 12; b.style.transform = `translate(${b.x}px, ${b.y}px)`;
+                if(b.y < -20) { b.remove(); bls.splice(i, 1); }
+            });
+
+            if(Math.random() < g.spawn) {
+                const e = document.createElement('div');
+                e.className = 'enemy';
+                e.innerHTML = `<svg viewBox="0 0 50 50"><path d="M10 10 L25 40 L40 10 Z" fill="none" stroke="#f06" stroke-width="3"/></svg>`;
+                e.x = Math.random()*(window.innerWidth-40); e.y = -50;
+                cont.appendChild(e); ens.push(e);
+            }
+
+            ens.forEach((e, i) => {
+                e.y += g.spd; e.style.transform = `translate(${e.x}px, ${e.y}px)`;
+                bls.forEach((b, bi) => {
+                    if(Math.abs(b.x - e.x - 20) < 25 && Math.abs(b.y - e.y - 20) < 25) {
+                        e.remove(); ens.splice(i,1); b.remove(); bls.splice(bi,1);
+                        g.sc += 10*g.mult; g.kl++;
+                        document.getElementById('sc').innerText = g.sc;
+                        document.getElementById('kl').innerText = g.kl;
+                        if(g.kl % 5 === 0) showUpgrades();
+                    }
+                });
+                if(e.y > window.innerHeight-30) { e.remove(); ens.splice(i,1); g.hp -= 20; }
+            });
+
+            document.getElementById('hp-fill').style.width = (g.hp/g.mH)*100+'%';
+            document.getElementById('hp-val').innerText = g.hp;
+            if(g.hp <= 0) { alert("КОНЕЦ ИГРЫ! СЧЕТ: " + g.sc); location.reload(); }
+            requestAnimationFrame(loop);
+        }
+    </script>
+</body>
+</html>

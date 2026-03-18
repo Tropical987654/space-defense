@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASTRO ROYALE: GENESIS</title>
+    <title>ASTRO ROYALE: RANDOM DECK</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap');
 
@@ -12,6 +12,7 @@
             --neon-pink: #f06;
             --neon-purple: #a0f;
             --glass: rgba(10, 10, 30, 0.9);
+            --bg-dark: #020205;
         }
 
         body, html { 
@@ -22,95 +23,61 @@
 
         #game-container { 
             position: relative; width: 100%; max-width: 500px; height: 100%; 
-            margin: 0 auto; background: #050510; overflow: hidden;
-            border: 1px solid #222;
+            margin: 0 auto; background: var(--bg-dark); overflow: hidden;
+            border: 1px solid #1a1a1a;
         }
 
-        /* --- ЭКРАНЫ --- */
         .screen {
             position: absolute; inset: 0; z-index: 500;
             background: radial-gradient(circle at center, #0a0a25 0%, #000 100%);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 20px; transition: 0.5s;
+            text-align: center; padding: 20px; transition: 0.4s;
         }
 
-        /* Загрузка */
-        #loader-screen { background: #000; }
-        .logo-box { font-size: 3rem; font-weight: 900; color: var(--neon-blue); text-shadow: 0 0 30px var(--neon-blue); animation: flare 2s infinite; }
-        .loader-bar { width: 200px; height: 4px; background: #111; margin-top: 20px; border-radius: 2px; overflow: hidden; }
-        .loader-fill { height: 100%; width: 0%; background: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); animation: load 3s forwards; }
-
-        /* Ввод ника */
-        input {
-            background: rgba(255,255,255,0.05); border: 2px solid var(--neon-blue);
-            padding: 15px; color: #fff; font-family: 'Orbitron'; border-radius: 10px;
-            text-align: center; outline: none; margin: 20px 0; width: 80%;
-        }
-
-        /* Выбор бойцов */
-        .fighter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .fighter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; width: 100%; max-width: 380px; }
         .fighter-item {
-            padding: 15px; border: 1px solid #444; border-radius: 10px; cursor: pointer;
-            transition: 0.3s; filter: grayscale(1); opacity: 0.6;
+            padding: 15px; border: 2px solid #333; border-radius: 15px; cursor: pointer;
+            transition: 0.3s; filter: grayscale(1); opacity: 0.4;
+            background: rgba(255,255,255,0.02);
         }
-        .fighter-item.active { border-color: var(--neon-blue); filter: grayscale(0); opacity: 1; box-shadow: 0 0 15px var(--neon-blue); transform: scale(1.05); }
+        .fighter-item.active { border-color: var(--neon-blue); filter: grayscale(0); opacity: 1; box-shadow: 0 0 20px rgba(0,255,255,0.3); transform: scale(1.05); }
 
-        /* --- ИГРОВОЕ ПОЛЕ --- */
-        .arena { position: absolute; inset: 0; background: linear-gradient(to bottom, #000, #050515, #000); }
-        .grid-line { position: absolute; width: 100%; height: 2px; background: var(--neon-blue); top: 50%; opacity: 0.2; box-shadow: 0 0 10px var(--neon-blue); }
-        .nickname-tag { position: absolute; bottom: 210px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--neon-blue); }
+        .arena { position: absolute; inset: 0; background: linear-gradient(to bottom, #000, #030310, #000); pointer-events: none; }
+        .base { position: absolute; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 20px; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; z-index: 10; font-size: 30px; }
+        .player-base { bottom: 125px; border-color: var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue); }
+        .enemy-base { top: 35px; border-color: var(--neon-pink); box-shadow: 0 0 20px var(--neon-pink); }
 
-        .base { position: absolute; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 15px; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; z-index: 10; font-size: 30px; }
-        .player-base { bottom: 130px; border-color: var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue); }
-        .enemy-base { top: 40px; border-color: var(--neon-pink); box-shadow: 0 0 20px var(--neon-pink); }
-
-        .unit { position: absolute; width: 30px; height: 30px; z-index: 5; pointer-events: none; text-align: center; }
-        .hp-bar { position: absolute; top: -8px; width: 100%; height: 4px; background: #333; border-radius: 2px; }
-        .hp-val { height: 100%; background: #0f0; }
+        .unit { position: absolute; width: 35px; height: 35px; z-index: 5; pointer-events: none; text-align: center; transition: transform 0.1s linear; }
+        .hp-bar { position: absolute; top: -10px; width: 100%; height: 4px; background: #222; border-radius: 2px; }
+        .hp-val { height: 100%; background: #0f0; width: 100%; transition: width 0.2s; }
 
         #drop-zone { position: absolute; bottom: 110px; width: 100%; height: calc(100% - 110px); z-index: 40; display: none; }
-        .valid-zone { position: absolute; bottom: 0; width: 100%; height: 45%; background: rgba(0,255,255,0.05); border-top: 1px dashed var(--neon-blue); }
+        .valid-zone { position: absolute; bottom: 0; width: 100%; height: 40%; background: rgba(0,255,255,0.03); border-top: 2px dashed rgba(0,255,255,0.2); }
 
-        #deck { position: absolute; bottom: 0; width: 100%; height: 110px; background: var(--glass); display: flex; justify-content: space-around; align-items: center; border-top: 2px solid var(--neon-blue); z-index: 50; }
-        .card { width: 75px; height: 90px; background: rgba(255,255,255,0.05); border: 2px solid var(--neon-blue); border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; }
-        .card.selected { background: var(--neon-blue); color: #000; transform: translateY(-10px); }
+        #deck { position: absolute; bottom: 0; width: 100%; height: 110px; background: var(--glass); display: flex; justify-content: space-around; align-items: center; border-top: 2px solid var(--neon-blue); z-index: 50; backdrop-filter: blur(10px); }
+        .card { width: 75px; height: 90px; background: rgba(255,255,255,0.03); border: 2px solid rgba(0,255,255,0.3); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; }
+        .card.selected { background: var(--neon-blue); color: #000; transform: translateY(-10px); border-color: #fff; }
         .card.disabled { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
-        .cost-badge { position: absolute; top: -10px; right: -10px; background: var(--neon-purple); width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid #fff; }
+        .cost-badge { position: absolute; top: -5px; right: -5px; background: var(--neon-purple); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; border: 1.5px solid #fff; }
 
-        #elixir-bar { position: absolute; bottom: 110px; width: 0%; height: 6px; background: var(--neon-purple); z-index: 51; }
-        .hidden { display: none !important; }
+        #elixir-bar { position: absolute; bottom: 110px; width: 0%; height: 4px; background: var(--neon-purple); z-index: 51; box-shadow: 0 0 10px var(--neon-purple); transition: 0.1s linear; }
+        .hidden { opacity: 0 !important; pointer-events: none !important; }
 
-        button { padding: 12px 25px; background: none; border: 2px solid var(--neon-blue); color: var(--neon-blue); font-family: 'Orbitron'; font-weight: 900; border-radius: 5px; cursor: pointer; }
+        button { padding: 14px 30px; background: none; border: 2px solid var(--neon-blue); color: var(--neon-blue); font-family: 'Orbitron'; font-weight: 900; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
         button:hover { background: var(--neon-blue); color: #000; }
-
-        @keyframes flare { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        @keyframes load { from { width: 0; } to { width: 100%; } }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="loader-screen" class="screen">
-        <div class="logo-box">ASTRO</div>
-        <div class="loader-bar"><div class="loader-fill"></div></div>
-        <p style="font-size: 10px; margin-top: 10px; letter-spacing: 2px;">SYNCING WITH SATELLITE...</p>
-    </div>
-
-    <div id="name-screen" class="screen hidden">
-        <h1 style="color:var(--neon-blue)">IDENTIFY</h1>
-        <p>ENTER YOUR PILOT TAG</p>
-        <input type="text" id="nick-input" placeholder="COMMANDER_01" maxlength="12">
-        <button onclick="saveName()">CONFIRM</button>
-    </div>
-
-    <div id="select-screen" class="screen hidden">
-        <h2 style="color:var(--neon-purple)">SELECT 3 UNITS</h2>
+    <div id="select-screen" class="screen">
+        <h1 style="color:var(--neon-blue); margin-bottom: 0;">ASTRO ROYALE</h1>
+        <p style="opacity:0.6; font-size:12px;">BUILD YOUR RECRUITMENT POOL</p>
         <div class="fighter-grid" id="fighter-list"></div>
-        <button id="start-btn" class="hidden" onclick="initBattle()">START BATTLE</button>
+        <button id="start-btn" class="hidden" onclick="initBattle()">ENGAGE BATTLE</button>
     </div>
 
-    <div class="arena"><div class="grid-line"></div></div>
-    <div id="player-tag" class="nickname-tag"></div>
+    <div class="arena"></div>
     <div id="p-base" class="base player-base">🛡️</div>
     <div id="e-base" class="base enemy-base">💀</div>
     <div id="elixir-bar"></div>
@@ -118,166 +85,161 @@
     <div id="deck"></div>
 
     <div id="end-screen" class="screen hidden">
-        <h1 id="end-title">VICTORY</h1>
-        <div class="btn-group">
-            <button onclick="location.reload()">MENU</button>
-        </div>
+        <h1 id="end-title" style="font-size:3rem">VICTORY</h1>
+        <button onclick="location.reload()">RESTART</button>
     </div>
 </div>
 
 <script>
     const unitData = {
-        scout: { hp: 120, dmg: 15, spd: 2, cost: 2, icon: '🛸', desc: 'Fast & Weak' },
-        frigate: { hp: 350, dmg: 35, spd: 1.2, cost: 4, icon: '🚀', desc: 'Balanced' },
-        titan: { hp: 900, dmg: 70, spd: 0.7, cost: 7, icon: '🛰️', desc: 'Heavy Tank' },
-        raider: { hp: 200, dmg: 25, spd: 2.5, cost: 3, icon: '⚡', desc: 'Quick Strike' },
-        drone: { hp: 80, dmg: 40, spd: 1.5, cost: 3, icon: '🐝', desc: 'High Damage' }
+        scout: { hp: 120, dmg: 18, spd: 2.2, cost: 2, icon: '🛸' },
+        frigate: { hp: 380, dmg: 40, spd: 1.3, cost: 4, icon: '🚀' },
+        titan: { hp: 1000, dmg: 80, spd: 0.8, cost: 7, icon: '🛰️' },
+        raider: { hp: 220, dmg: 30, spd: 2.8, cost: 3, icon: '⚡' },
+        drone: { hp: 90, dmg: 50, spd: 1.6, cost: 3, icon: '🐝' }
     };
 
-    let myNick = "";
-    let mySelection = [];
+    let myPool = []; // Те юниты, которые ты разрешил для себя
+    let currentHand = [null, null, null]; // 3 текущие карты в руке
     let gameActive = false;
     let elixir = 5;
     let units = [];
     let pBaseHp = 1000, eBaseHp = 1000;
-    let selectedType = null;
+    let selectedSlot = null; 
+    const cont = document.getElementById('game-container');
 
-    // Таймер загрузки
-    setTimeout(() => {
-        document.getElementById('loader-screen').classList.add('hidden');
-        document.getElementById('name-screen').classList.remove('hidden');
-    }, 3000);
-
-    function saveName() {
-        const val = document.getElementById('nick-input').value;
-        myNick = val || "COMMANDER";
-        document.getElementById('player-tag').innerText = myNick;
-        document.getElementById('name-screen').classList.add('hidden');
-        document.getElementById('select-screen').classList.remove('hidden');
-        renderSelection();
-    }
-
+    // Рендерим выбор в самом начале
     function renderSelection() {
         const list = document.getElementById('fighter-list');
         for (let key in unitData) {
-            const u = unitData[key];
             const div = document.createElement('div');
             div.className = 'fighter-item';
-            div.innerHTML = `<div style="font-size:30px">${u.icon}</div><div style="font-size:10px">${key.toUpperCase()}</div>`;
+            div.innerHTML = `<div style="font-size:30px">${unitData[key].icon}</div><div style="font-size:10px">${key.toUpperCase()}</div>`;
             div.onclick = () => {
-                if (mySelection.includes(key)) {
-                    mySelection = mySelection.filter(item => item !== key);
+                if(myPool.includes(key)) {
+                    myPool = myPool.filter(k => k !== key);
                     div.classList.remove('active');
-                } else if (mySelection.length < 3) {
-                    mySelection.push(key);
+                } else {
+                    myPool.push(key);
                     div.classList.add('active');
                 }
-                document.getElementById('start-btn').classList.toggle('hidden', mySelection.length < 3);
+                document.getElementById('start-btn').classList.toggle('hidden', myPool.length === 0);
             };
             list.appendChild(div);
         }
     }
+    renderSelection();
 
     function initBattle() {
         document.getElementById('select-screen').classList.add('hidden');
-        renderDeck();
+        
+        // Заполняем руку случайными из твоего пула
+        for(let i=0; i<3; i++) currentHand[i] = getRandomFromPool();
+        
+        renderHand();
         gameActive = true;
-        update();
+        requestAnimationFrame(loop);
+        
+        // Спавн врагов (случайные из всех существующих)
+        const allTypes = Object.keys(unitData);
         setInterval(() => {
-            if(gameActive) spawn(Object.keys(unitData)[Math.floor(Math.random()*5)], true, Math.random()*300 + 50, 100);
-        }, 4000);
+            if(!gameActive) return;
+            const type = allTypes[Math.floor(Math.random()*allTypes.length)];
+            spawn(type, true, Math.random()*(cont.offsetWidth-60)+30, 100);
+        }, 3500);
     }
 
-    function renderDeck() {
-        const d = document.getElementById('deck');
-        mySelection.forEach(type => {
-            const t = unitData[type];
+    function getRandomFromPool() {
+        return myPool[Math.floor(Math.random() * myPool.length)];
+    }
+
+    function renderHand() {
+        const deckDiv = document.getElementById('deck');
+        deckDiv.innerHTML = '';
+        currentHand.forEach((type, index) => {
             const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `<span style="font-size:24px">${t.icon}</span><div class="cost-badge">${t.cost}</div>`;
-            card.onclick = () => selectCard(type, card);
-            d.appendChild(card);
+            card.className = 'card' + (selectedSlot === index ? ' selected' : '');
+            if(elixir < unitData[type].cost) card.classList.add('disabled');
+            
+            card.innerHTML = `<span style="font-size:24px">${unitData[type].icon}</span><div class="cost-badge">${unitData[type].cost}</div>`;
+            card.onclick = () => {
+                selectedSlot = index;
+                document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                document.getElementById('drop-zone').style.display = 'block';
+            };
+            deckDiv.appendChild(card);
         });
     }
 
-    function selectCard(type, el) {
-        if(elixir < unitData[type].cost) return;
-        document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-        if(selectedType === type) {
-            selectedType = null;
-            document.getElementById('drop-zone').style.display = 'none';
-        } else {
-            selectedType = type;
-            el.classList.add('selected');
-            document.getElementById('drop-zone').style.display = 'block';
-        }
-    }
-
     document.getElementById('drop-zone').onclick = (e) => {
-        if(!selectedType) return;
-        const rect = document.getElementById('game-container').getBoundingClientRect();
-        const x = e.clientX - rect.left;
+        if(selectedSlot === null) return;
+        const type = currentHand[selectedSlot];
+        const rect = cont.getBoundingClientRect();
         const y = e.clientY - rect.top;
-        if(y > rect.height * 0.55 && y < rect.height - 110) {
-            spawn(selectedType, false, x - 15, y - 15);
-            elixir -= unitData[selectedType].cost;
-            selectedType = null;
+        
+        if(y > rect.height * 0.6) {
+            spawn(type, false, e.clientX - rect.left, y);
+            elixir -= unitData[type].cost;
+            
+            // Заменяем использованную карту на новую из пула
+            currentHand[selectedSlot] = getRandomFromPool();
+            selectedSlot = null;
             document.getElementById('drop-zone').style.display = 'none';
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+            renderHand();
         }
     };
 
     function spawn(type, isEnemy, x, y) {
         const t = unitData[type];
-        const u = { id: Math.random(), type, hp: t.hp, maxHp: t.hp, isEnemy, x, y, el: null };
+        const u = { type, hp: t.hp, maxHp: t.hp, isEnemy, x, y, el: null };
         const div = document.createElement('div');
         div.className = 'unit';
-        div.innerHTML = `<div class="hp-bar"><div class="hp-val" style="width:100%"></div></div><span>${t.icon}</span>`;
-        if(isEnemy) div.style.transform = 'rotate(180deg)';
+        div.style.left = x + 'px'; div.style.top = y + 'px';
+        div.innerHTML = `<div class="hp-bar"><div class="hp-val"></div></div><span style="font-size:25px; ${isEnemy?'filter:hue-rotate(150deg)':''}">${t.icon}</span>`;
         u.el = div;
-        document.getElementById('game-container').appendChild(div);
+        cont.appendChild(div);
         units.push(u);
     }
 
-    function update() {
+    function loop() {
         if(!gameActive) return;
-        if(elixir < 10) elixir += 0.02;
-        document.getElementById('elixir-bar').style.width = (elixir * 10) + '%';
+
+        if(elixir < 10) {
+            elixir += 0.02;
+            document.getElementById('elixir-bar').style.width = (elixir * 10) + '%';
+            // Обновляем доступность карт без перерендера всего DOM
+            document.querySelectorAll('.card').forEach((c, i) => {
+                if(elixir < unitData[currentHand[i]].cost) c.classList.add('disabled');
+                else c.classList.remove('disabled');
+            });
+        }
 
         units.forEach((u, i) => {
             const config = unitData[u.type];
             const dir = u.isEnemy ? 1 : -1;
-            let target = null;
+            
+            // Движение
+            u.y += config.spd * dir;
+            u.el.style.top = u.y + 'px';
 
-            units.forEach(other => {
-                if(u.isEnemy !== other.isEnemy) {
-                    const d = Math.hypot(u.x - other.x, u.y - other.y);
-                    if(d < 50) target = other;
-                }
-            });
+            // Урон базам
+            if(!u.isEnemy && u.y < 110) { eBaseHp -= config.dmg/50; u.hp = 0; }
+            if(u.isEnemy && u.y > cont.offsetHeight - 160) { pBaseHp -= config.dmg/50; u.hp = 0; }
 
-            if(target) {
-                target.hp -= config.dmg / 25;
-            } else {
-                const distToBase = u.isEnemy ? (document.getElementById('game-container').offsetHeight - 200 - u.y) : (u.y - 110);
-                if(Math.abs(distToBase) < 30) {
-                    if(u.isEnemy) pBaseHp -= config.dmg/20; else eBaseHp -= config.dmg/20;
-                } else {
-                    u.y += config.spd * dir;
-                }
+            if(u.hp <= 0) {
+                u.el.remove();
+                units.splice(i, 1);
             }
-
-            u.el.style.transform = `translate(${u.x}px, ${u.y}px) ${u.isEnemy ? 'rotate(180deg)' : ''}`;
-            u.el.querySelector('.hp-val').style.width = (u.hp/u.maxHp*100)+'%';
-            if(u.hp <= 0) { u.el.remove(); units.splice(i, 1); }
         });
 
         if(pBaseHp <= 0 || eBaseHp <= 0) {
             gameActive = false;
             document.getElementById('end-screen').classList.remove('hidden');
-            document.getElementById('end-title').innerText = pBaseHp <= 0 ? "DEFEAT" : "VICTORY";
+            document.getElementById('end-title').innerText = eBaseHp <= 0 ? "VICTORY" : "DEFEAT";
+        } else {
+            requestAnimationFrame(loop);
         }
-        requestAnimationFrame(update);
     }
 </script>
 </body>

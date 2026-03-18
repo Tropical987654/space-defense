@@ -1,300 +1,334 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ULTRA DEFENSE PRO</title>
+    <title>ASTRO ROYALE</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap');
 
         :root {
             --neon-blue: #0ff;
             --neon-pink: #f06;
-            --glass: rgba(10, 10, 30, 0.8);
+            --neon-purple: #a0f;
+            --glass: rgba(10, 10, 30, 0.85);
+            --bg-dark: #050510;
         }
 
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             overflow: hidden; background: #000; 
             font-family: 'Orbitron', sans-serif; color: #fff; 
-            touch-action: none; 
+            user-select: none; touch-action: none;
         }
 
-        #game-container { 
-            position: relative; width: 100%; height: 100%; 
-            background: radial-gradient(circle at center, #050515 0%, #000 100%);
-            overflow: hidden;
+        /* ==========================================
+           КРУТОЙ ЗАГРУЗОЧНЫЙ ЭКРАН (PRELOADER)
+           ========================================== */
+        #preloader {
+            position: fixed; inset: 0; z-index: 999;
+            background: var(--bg-dark);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 1s ease-out, visibility 1s;
         }
-
-        .star { position: absolute; background: #fff; border-radius: 50%; animation: moveStars linear infinite; }
-        @keyframes moveStars { from { transform: translateY(-100px); } to { transform: translateY(110vh); } }
-
-        /* Экраны меню */
-        .screen { 
-            position: absolute; inset: 0; z-index: 100; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            background: radial-gradient(circle, rgba(0,255,255,0.05) 0%, rgba(0,0,0,0.9) 100%);
-            backdrop-filter: blur(20px); transition: 0.5s;
-        }
-        .hidden { opacity: 0; pointer-events: none; transform: scale(1.1); }
-
-        #title { 
-            font-size: clamp(2rem, 8vw, 5rem); font-weight: 900; color: var(--neon-blue); 
-            text-shadow: 0 0 20px var(--neon-blue); text-align: center;
-            animation: floating 3s ease-in-out infinite;
-        }
-        @keyframes floating { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-
-        .grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 90%; }
-        .card { 
-            width: 180px; padding: 20px; background: var(--glass); 
-            border: 2px solid var(--neon-blue); border-radius: 20px; cursor: pointer; 
-            transition: 0.3s; text-align: center;
-        }
-        .card:hover { transform: scale(1.05); box-shadow: 0 0 30px var(--neon-blue); }
-
-        /* Игровые объекты */
-        #player { position: absolute; width: 50px; height: 50px; z-index: 10; filter: drop-shadow(0 0 15px var(--neon-blue)); will-change: transform; }
-        .bullet { position: absolute; width: 4px; height: 25px; background: var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue); border-radius: 4px;}
-        .enemy { position: absolute; width: 40px; height: 40px; filter: drop-shadow(0 0 12px var(--neon-pink)); }
-
-        /* Интерфейс управления */
-        #controls { position: absolute; inset: 0; pointer-events: none; z-index: 60; display: none; }
         
-        .joy-base { 
-            position: absolute; bottom: 40px; left: 40px; 
-            width: 100px; height: 100px; background: var(--glass);
-            border: 2px solid var(--neon-blue); border-radius: 50%;
-            pointer-events: auto; touch-action: none;
-        }
-        .joy-stick {
-            position: absolute; top: 50%; left: 50%;
-            width: 40px; height: 40px; background: var(--neon-blue);
-            border-radius: 50%; transform: translate(-50%, -50%);
-            box-shadow: 0 0 20px var(--neon-blue);
+        #preloader.fade-out { opacity: 0; visibility: hidden; }
+
+        .loader-logo {
+            font-size: 3rem; font-weight: 900; color: var(--neon-blue);
+            text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 20px;
+            animation: pulseGlow 2s infinite;
         }
 
-        #fire-btn {
-            position: absolute; bottom: 40px; right: 40px;
-            width: 90px; height: 90px; background: rgba(255, 0, 102, 0.2);
-            border: 3px solid var(--neon-pink); border-radius: 50%;
+        .loader-bar-container {
+            width: 250px; height: 6px; background: rgba(255,255,255,0.05);
+            border-radius: 3px; overflow: hidden; position: relative;
+            border: 1px solid rgba(0,255,255,0.2);
+        }
+
+        .loader-bar-fill {
+            height: 100%; background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            width: 0%; box-shadow: 0 0 15px var(--neon-blue);
+            animation: fillProgress 2.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .loader-text {
+            font-size: 10px; color: var(--neon-blue); text-transform: uppercase;
+            letter-spacing: 2px; margin-top: 10px; opacity: 0.8;
+            animation: blinkText 1s infinite;
+        }
+
+        /* Анимации прелоадера */
+        @keyframes pulseGlow { 0%, 100% { text-shadow: 0 0 10px var(--neon-blue); } 50% { text-shadow: 0 0 30px var(--neon-blue), 0 0 10px var(--neon-purple); } }
+        @keyframes fillProgress { 0% { width: 0%; } 100% { width: 100%; } }
+        @keyframes blinkText { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+        /* ==========================================
+           ОСНОВНОЙ КОД ИГРЫ (БЕЗ ИЗМЕНЕНИЙ)
+           ========================================== */
+        #game-container { 
+            position: relative; width: 100%; max-width: 500px; height: 100%; 
+            margin: 0 auto; background: var(--bg-dark); overflow: hidden;
+            border-left: 2px solid #111; border-right: 2px solid #111;
+        }
+
+        .arena {
+            position: absolute; inset: 0;
+            background: 
+                linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        
+        .bridge {
+            position: absolute; top: 50%; width: 80px; height: 4px;
+            background: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue);
+            transform: translateY(-50%); opacity: 0.3;
+        }
+
+        .base {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            width: 80px; height: 80px; border-radius: 20px;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 900; color: var(--neon-pink); pointer-events: auto;
-            backdrop-filter: blur(5px); box-shadow: 0 0 20px rgba(255,0,102,0.2);
-            user-select: none;
+            border: 3px solid #fff; z-index: 10;
         }
-        #fire-btn:active { transform: scale(0.9); background: var(--neon-pink); color: #000; }
+        .player-base { bottom: 120px; border-color: var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue); }
+        .enemy-base { top: 40px; border-color: var(--neon-pink); box-shadow: 0 0 20px var(--neon-pink); }
 
-        #hud { 
-            position: absolute; top: 20px; left: 20px; z-index: 50; 
-            background: rgba(0,0,0,0.5); padding: 15px; border-radius: 15px; border-left: 4px solid var(--neon-blue);
+        .unit {
+            position: absolute; width: 30px; height: 30px;
+            transition: transform 0.1s linear; z-index: 5;
+            display: flex; align-items: center; justify-content: center;
         }
-        .bar { width: 120px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 5px 0; overflow: hidden; }
-        #hp-fill { height: 100%; background: var(--neon-blue); width: 100%; transition: 0.2s; }
+        .hp-bar {
+            position: absolute; top: -10px; width: 100%; height: 4px;
+            background: #333; border-radius: 2px;
+        }
+        .hp-val { height: 100%; background: #0f0; transition: 0.2s; }
 
-        @keyframes shake { 0%, 100% { transform:translate(0,0); } 25% { transform:translate(5px,5px); } 75% { transform:translate(-5px,-5px); } }
+        #deck {
+            position: absolute; bottom: 0; width: 100%; height: 110px;
+            background: var(--glass); display: flex; justify-content: space-around;
+            align-items: center; border-top: 2px solid var(--neon-blue); padding: 5px;
+        }
+        .card {
+            width: 80px; height: 95px; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--neon-blue); border-radius: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s;
+        }
+        .card:active { transform: scale(0.9); background: var(--neon-blue); color: #000; }
+        .card.disabled { opacity: 0.4; filter: grayscale(1); pointer-events: none; }
+        .cost { font-weight: 900; color: var(--neon-blue); margin-top: 5px; }
+
+        #elixir-container {
+            position: absolute; bottom: 110px; width: 100%; height: 10px;
+            background: #111;
+        }
+        #elixir-fill { height: 100%; background: var(--neon-purple); width: 0%; transition: 0.1s; box-shadow: 0 0 10px var(--neon-purple); }
+
+        .screen {
+            position: absolute; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.9); display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        .hidden { display: none; }
+        
+        button {
+            padding: 15px 40px; background: none; border: 2px solid var(--neon-blue);
+            color: var(--neon-blue); font-family: 'Orbitron'; font-weight: 900;
+            border-radius: 50px; cursor: pointer; transition: 0.3s;
+        }
+        button:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 20px var(--neon-blue); }
+
+        .vfx { position: absolute; pointer-events: none; border-radius: 50%; animation: explode 0.5s ease-out forwards; }
+        @keyframes explode { from { transform: scale(0); opacity: 1; } to { transform: scale(3); opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <div id="stars-container"></div>
+<div id="preloader">
+    <div class="loader-logo">ASTRO</div>
+    <div class="loader-bar-container">
+        <div class="loader-bar-fill"></div>
+    </div>
+    <div class="loader-text">INITIALIZING SYSTEMS...</div>
+</div>
 
-        <div id="hud">
-            <div style="font-size: 10px; letter-spacing: 1px;">SHIELD</div>
-            <div class="bar"><div id="hp-fill"></div></div>
-            <div style="font-size: 14px;">SCORE: <span id="sc" style="color:var(--neon-blue)">0</span></div>
+<div id="game-container">
+    <div class="arena">
+        <div class="bridge" style="left: 20%;"></div>
+        <div class="bridge" style="right: 20%;"></div>
+    </div>
+
+    <div id="p-base" class="base player-base"><span>🛡️</span></div>
+    <div id="e-base" class="base enemy-base"><span>💀</span></div>
+
+    <div id="elixir-container"><div id="elixir-fill"></div></div>
+
+    <div id="deck">
+        <div class="card" onclick="spawn('scout')">
+            <span style="font-size:20px">🛸</span>
+            <div class="cost">2</div>
+            <div style="font-size:8px">SCOUT</div>
         </div>
-
-        <div id="controls">
-            <div class="joy-base" id="joy-base"><div class="joy-stick" id="joy-stick"></div></div>
-            <div id="fire-btn">FIRE</div>
+        <div class="card" onclick="spawn('destroyer')">
+            <span style="font-size:20px">🚀</span>
+            <div class="cost">4</div>
+            <div style="font-size:8px">FRIGATE</div>
         </div>
-
-        <div id="m-screen" class="screen">
-            <div id="title">ULTRA<br>DEFENSE</div>
-            <div class="grid">
-                <div class="card" onclick="init(2, 0.02, 500)"><h3>NEBULA</h3><p>EASY START</p></div>
-                <div class="card" onclick="init(4, 0.04, 300)"><h3>VOID</h3><p>NORMAL</p></div>
-                <div class="card" onclick="init(8, 0.06, 150)"><h3>NOVA</h3><p>HARDCORE</p></div>
-            </div>
-        </div>
-
-        <div id="u-screen" class="screen hidden">
-            <h2 id="title" style="font-size: 30px;">LEVEL UP</h2>
-            <div id="u-grid" class="grid"></div>
-        </div>
-
-        <div id="player" style="display:none">
-            <svg viewBox="0 0 50 50">
-                <path d="M25 5 L45 40 L25 32 L5 40 Z" fill="#0ff" stroke="#fff" stroke-width="1"/>
-            </svg>
+        <div class="card" onclick="spawn('dreadnought')">
+            <span style="font-size:20px">🛰️</span>
+            <div class="cost">7</div>
+            <div style="font-size:8px">TITAN</div>
         </div>
     </div>
 
-    <script>
-        const cont = document.getElementById('game-container');
-        const player = document.getElementById('player');
-        const joyBase = document.getElementById('joy-base');
-        const joyStick = document.getElementById('joy-stick');
-        const fireBtn = document.getElementById('fire-btn');
+    <div id="start-screen" class="screen">
+        <h1 style="color:var(--neon-blue); text-shadow: 0 0 15px var(--neon-blue);">ASTRO ROYALE</h1>
+        <p style="text-align:center; font-size:12px; margin-bottom:30px">DEFEND YOUR BASE<br>DESTROY THE ENEMY</p>
+        <button onclick="startGame()">BATTLE</button>
+    </div>
+</div>
 
-        let g = { 
-            active: false, sc: 0, kl: 0, hp: 100, mH: 100, fr: 350, 
-            ms: 1, spd: 1, baseSpawn: 0.02, curSpawn: 0.02, mult: 1, pSpd: 8, firing: false 
+<script>
+    // СКРИПТ ПРЕЛОАДЕРА
+    window.addEventListener('load', function() {
+        const preloader = document.getElementById('preloader');
+        // Даем анимации полоски закончиться (2.5с) + небольшая задержка для плавности
+        setTimeout(() => {
+            preloader.classList.add('fade-out');
+        }, 3000); 
+    });
+
+    // СКРИПТ ИГРЫ (БЕЗ ИЗМЕНЕНИЙ)
+    const cont = document.getElementById('game-container');
+    const elixirFill = document.getElementById('elixir-fill');
+    
+    let gameActive = false;
+    let elixir = 5;
+    let units = [];
+    let pBaseHp = 1000, eBaseHp = 1000;
+
+    const unitTypes = {
+        scout: { hp: 100, dmg: 10, spd: 2, cost: 2, icon: '🛸', color: '#0ff' },
+        destroyer: { hp: 300, dmg: 30, spd: 1.2, cost: 4, icon: '🚀', color: '#0f8' },
+        dreadnought: { hp: 800, dmg: 60, spd: 0.6, cost: 7, icon: '🛰️', color: '#f0f' }
+    };
+
+    function startGame() {
+        document.getElementById('start-screen').classList.add('hidden');
+        gameActive = true;
+        update();
+        setInterval(aiLogic, 3000); 
+    }
+
+    function spawn(type, isEnemy = false) {
+        const t = unitTypes[type];
+        if(!isEnemy && elixir < t.cost) return;
+        if(!isEnemy) elixir -= t.cost;
+
+        const u = {
+            id: Date.now() + Math.random(),
+            type: type,
+            hp: t.hp,
+            maxHp: t.hp,
+            isEnemy: isEnemy,
+            x: (cont.offsetWidth/2 - 15),
+            y: isEnemy ? 130 : cont.offsetHeight - 230,
+            el: null
         };
+
+        u.x += (Math.random() > 0.5 ? 80 : -80);
+
+        const div = document.createElement('div');
+        div.className = 'unit';
+        div.innerHTML = `
+            <div class="hp-bar"><div class="hp-val" style="width:100%"></div></div>
+            <span style="font-size:24px; filter: drop-shadow(0 0 5px ${isEnemy ? '#f06' : '#0ff'})">${t.icon}</span>
+        `;
         
-        let px = 0, py = 0; // Позиция будет задана в init
-        let bls = [], ens = [], lastF = 0;
-        let keys = {};
-        let joyPos = { x: 0, y: 0, active: false };
+        u.el = div;
+        cont.appendChild(div);
+        units.push(u);
+    }
 
-        // Звезды
-        for(let i=0; i<80; i++) {
-            const s = document.createElement('div');
-            s.className = 'star';
-            s.style.width = s.style.height = Math.random()*3+'px';
-            s.style.left = Math.random()*100+'%';
-            s.style.top = Math.random()*100+'%';
-            s.style.animationDuration = Math.random()*3+2+'s';
-            document.getElementById('stars-container').appendChild(s);
-        }
+    function aiLogic() {
+        if(!gameActive) return;
+        const types = ['scout', 'destroyer', 'dreadnought'];
+        const randomType = types[Math.floor(Math.random() * types.length)];
+        spawn(randomType, true);
+    }
 
-        window.onkeydown = (e) => keys[e.code] = true;
-        window.onkeyup = (e) => keys[e.code] = false;
-        window.onmousedown = () => { if(g.active) g.firing = true; };
-        window.onmouseup = () => g.firing = false;
+    function update() {
+        if(!gameActive) return;
 
-        // Мобильный джойстик
-        joyBase.ontouchstart = (e) => { e.preventDefault(); joyPos.active = true; };
-        window.ontouchmove = (e) => {
-            if(!joyPos.active) return;
-            let touch = e.touches[0];
-            let rect = joyBase.getBoundingClientRect();
-            let dx = touch.clientX - (rect.left + rect.width/2);
-            let dy = touch.clientY - (rect.top + rect.height/2);
-            let dist = Math.min(50, Math.sqrt(dx*dx + dy*dy));
-            let angle = Math.atan2(dy, dx);
-            joyPos.x = Math.cos(angle) * (dist/50);
-            joyPos.y = Math.sin(angle) * (dist/50);
-            joyStick.style.transform = `translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px))`;
-        };
-        window.ontouchend = () => { joyPos.active = false; joyPos.x = 0; joyPos.y = 0; joyStick.style.transform = `translate(-50%, -50%)`; };
+        if(elixir < 10) elixir += 0.015;
+        elixirFill.style.width = (elixir * 10) + '%';
 
-        fireBtn.ontouchstart = (e) => { e.preventDefault(); g.firing = true; };
-        fireBtn.ontouchend = (e) => { e.preventDefault(); g.firing = false; };
-
-        function init(s, sw, hp) {
-            g.spd = s; g.baseSpawn = g.curSpawn = sw; g.hp = g.mH = hp;
-            g.sc = 0; g.kl = 0;
-            px = window.innerWidth / 2 - 25;
-            py = window.innerHeight - 120;
-            document.getElementById('m-screen').classList.add('hidden');
-            document.getElementById('controls').style.display = 'block';
-            player.style.display = 'block';
-            g.active = true;
-            requestAnimationFrame(loop);
-        }
-
-        function loop() {
-            if(!g.active) return;
-
-            // Нарастание сложности (каждые 100 очков +0.5% к шансу врага)
-            g.curSpawn = g.baseSpawn + (Math.floor(g.sc / 100) * 0.005);
-
-            // Движение
-            if(keys['KeyA'] || keys['ArrowLeft']) px -= g.pSpd;
-            if(keys['KeyD'] || keys['ArrowRight']) px += g.pSpd;
-            if(keys['KeyW'] || keys['ArrowUp']) py -= g.pSpd;
-            if(keys['KeyS'] || keys['ArrowDown']) py += g.pSpd;
-
-            px += joyPos.x * g.pSpd;
-            py += joyPos.y * g.pSpd;
-
-            // Ограничение границ (с учетом изменения размера окна)
-            px = Math.max(0, Math.min(window.innerWidth - 50, px));
-            py = Math.max(0, Math.min(window.innerHeight - 50, py));
-            
-            player.style.transform = `translate(${px}px, ${py}px)`;
-
-            // Огонь
-            if(g.firing && Date.now() - lastF > g.fr) {
-                for(let i=0; i<g.ms; i++) {
-                    const b = document.createElement('div');
-                    b.className = 'bullet';
-                    b.x = px + 23 + (i-(g.ms-1)/2)*15;
-                    b.y = py;
-                    cont.appendChild(b); bls.push(b);
-                }
-                lastF = Date.now();
-            }
-
-            // Пули
-            bls.forEach((b, i) => {
-                b.y -= 12;
-                b.style.transform = `translate(${b.x}px, ${b.y}px)`;
-                if(b.y < -50) { b.remove(); bls.splice(i, 1); }
-            });
-
-            // Враги
-            if(Math.random() < g.curSpawn) {
-                const e = document.createElement('div');
-                e.className = 'enemy';
-                e.innerHTML = `<svg viewBox="0 0 50 50"><path d="M10 5 L25 45 L40 5 Z" fill="none" stroke="#f06" stroke-width="3"/></svg>`;
-                e.x = Math.random()*(window.innerWidth-40); e.y = -60;
-                cont.appendChild(e); ens.push(e);
-            }
-
-            ens.forEach((e, i) => {
-                e.y += g.spd;
-                e.style.transform = `translate(${e.x}px, ${e.y}px)`;
-                
-                bls.forEach((b, bi) => {
-                    if(Math.abs(b.x - e.x - 17) < 30 && Math.abs(b.y - e.y - 17) < 30) {
-                        e.remove(); ens.splice(i,1); b.remove(); bls.splice(bi,1);
-                        g.sc += 10; g.kl++;
-                        document.getElementById('sc').innerText = g.sc;
-                        if(g.kl % 10 === 0) upgrade();
-                    }
-                });
-
-                if(e.y > window.innerHeight || (Math.abs(px - e.x) < 35 && Math.abs(py - e.y) < 35)) {
-                    e.remove(); ens.splice(i,1);
-                    g.hp -= 20;
-                    cont.style.animation = 'shake 0.2s';
-                    setTimeout(()=>cont.style.animation='', 200);
-                }
-            });
-
-            document.getElementById('hp-fill').style.width = (g.hp/g.mH)*100+'%';
-            if(g.hp <= 0) { alert("MISSION FAILED! SCORE: " + g.sc); location.reload(); }
-            
-            requestAnimationFrame(loop);
-        }
-
-        function upgrade() {
-            g.active = false;
-            const ugrid = document.getElementById('u-grid');
-            ugrid.innerHTML = '';
-            const opts = [
-                {n:"SPEED", f:()=>g.pSpd+=2},
-                {n:"RELOAD", f:()=>g.fr=Math.max(100, g.fr-50)},
-                {n:"TWIN", f:()=>g.ms++}
-            ];
-            opts.forEach(o => {
-                const d = document.createElement('div');
-                d.className = 'card'; d.innerHTML = `<h3>${o.n}</h3>`;
-                d.onclick = () => { o.f(); document.getElementById('u-screen').classList.add('hidden'); g.active=true; requestAnimationFrame(loop); };
-                ugrid.appendChild(d);
-            });
-            document.getElementById('u-screen').classList.remove('hidden');
-        }
-
-        // Авто-коррекция при повороте экрана
-        window.addEventListener('resize', () => {
-            px = Math.min(px, window.innerWidth - 50);
-            py = Math.min(py, window.innerHeight - 50);
+        document.querySelectorAll('.card').forEach((c, i) => {
+            const type = Object.keys(unitTypes)[i];
+            if(elixir < unitTypes[type].cost) c.classList.add('disabled');
+            else c.classList.remove('disabled');
         });
-    </script>
+
+        units.forEach((u, i) => {
+            const config = unitTypes[u.type];
+            const direction = u.isEnemy ? 1 : -1;
+            let targetFound = false;
+
+            const distToBase = u.isEnemy ? (cont.offsetHeight - 230 - u.y) : (u.y - 130);
+            if(Math.abs(distToBase) < 20) {
+                if(u.isEnemy) pBaseHp -= config.dmg/10;
+                else eBaseHp -= config.dmg/10;
+                targetFound = true;
+            }
+
+            units.forEach(other => {
+                if(u.isEnemy !== other.isEnemy) {
+                    const dist = Math.hypot(u.x - other.x, u.y - other.y);
+                    if(dist < 40) {
+                        other.hp -= config.dmg/20;
+                        targetFound = true;
+                    }
+                }
+            });
+
+            if(!targetFound) {
+                u.y += config.spd * direction;
+            }
+
+            u.el.style.transform = `translate(${u.x}px, ${u.y}px) ${u.isEnemy ? 'rotate(180deg)' : ''}`;
+            u.el.querySelector('.hp-val').style.width = (u.hp / u.maxHp * 100) + '%';
+
+            if(u.hp <= 0) {
+                createExplosion(u.x, u.y, u.isEnemy ? '#f06' : '#0ff');
+                u.el.remove();
+                units.splice(i, 1);
+            }
+        });
+
+        if(pBaseHp <= 0 || eBaseHp <= 0) {
+            gameActive = false;
+            alert(pBaseHp <= 0 ? "GAME OVER! YOUR BASE DESTROYED" : "VICTORY! ENEMY BASE CAPTURED");
+            location.reload();
+        }
+
+        requestAnimationFrame(update);
+    }
+
+    function createExplosion(x, y, color) {
+        const v = document.createElement('div');
+        v.className = 'vfx';
+        v.style.left = x + 'px';
+        v.style.top = y + 'px';
+        v.style.width = '30px'; v.style.height = '30px';
+        v.style.background = color;
+        cont.appendChild(v);
+        setTimeout(() => v.remove(), 500);
+    }
+</script>
+
 </body>
 </html>

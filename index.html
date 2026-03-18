@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASTRO ROYALE PRO</title>
+    <title>ASTRO ROYALE: GENESIS</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap');
 
@@ -26,251 +26,240 @@
             border: 1px solid #222;
         }
 
-        /* Арена */
-        .arena {
-            position: absolute; inset: 0;
-            background: linear-gradient(to bottom, #000 0%, #050515 50%, #000 100%);
-        }
-        .grid-line {
-            position: absolute; width: 100%; height: 2px; background: rgba(0,255,255,0.1); top: 50%;
-            box-shadow: 0 0 10px var(--neon-blue); z-index: 1;
+        /* --- ЭКРАНЫ --- */
+        .screen {
+            position: absolute; inset: 0; z-index: 500;
+            background: radial-gradient(circle at center, #0a0a25 0%, #000 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 20px; transition: 0.5s;
         }
 
-        /* Базы */
-        .base {
-            position: absolute; left: 50%; transform: translateX(-50%);
-            width: 70px; height: 70px; border-radius: 15px;
-            display: flex; align-items: center; justify-content: center;
-            border: 3px solid #fff; z-index: 10; font-size: 30px;
+        /* Загрузка */
+        #loader-screen { background: #000; }
+        .logo-box { font-size: 3rem; font-weight: 900; color: var(--neon-blue); text-shadow: 0 0 30px var(--neon-blue); animation: flare 2s infinite; }
+        .loader-bar { width: 200px; height: 4px; background: #111; margin-top: 20px; border-radius: 2px; overflow: hidden; }
+        .loader-fill { height: 100%; width: 0%; background: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); animation: load 3s forwards; }
+
+        /* Ввод ника */
+        input {
+            background: rgba(255,255,255,0.05); border: 2px solid var(--neon-blue);
+            padding: 15px; color: #fff; font-family: 'Orbitron'; border-radius: 10px;
+            text-align: center; outline: none; margin: 20px 0; width: 80%;
         }
+
+        /* Выбор бойцов */
+        .fighter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .fighter-item {
+            padding: 15px; border: 1px solid #444; border-radius: 10px; cursor: pointer;
+            transition: 0.3s; filter: grayscale(1); opacity: 0.6;
+        }
+        .fighter-item.active { border-color: var(--neon-blue); filter: grayscale(0); opacity: 1; box-shadow: 0 0 15px var(--neon-blue); transform: scale(1.05); }
+
+        /* --- ИГРОВОЕ ПОЛЕ --- */
+        .arena { position: absolute; inset: 0; background: linear-gradient(to bottom, #000, #050515, #000); }
+        .grid-line { position: absolute; width: 100%; height: 2px; background: var(--neon-blue); top: 50%; opacity: 0.2; box-shadow: 0 0 10px var(--neon-blue); }
+        .nickname-tag { position: absolute; bottom: 210px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--neon-blue); }
+
+        .base { position: absolute; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 15px; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; z-index: 10; font-size: 30px; }
         .player-base { bottom: 130px; border-color: var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue); }
         .enemy-base { top: 40px; border-color: var(--neon-pink); box-shadow: 0 0 20px var(--neon-pink); }
 
-        /* Юниты */
-        .unit { position: absolute; width: 30px; height: 30px; z-index: 5; pointer-events: none; }
+        .unit { position: absolute; width: 30px; height: 30px; z-index: 5; pointer-events: none; text-align: center; }
         .hp-bar { position: absolute; top: -8px; width: 100%; height: 4px; background: #333; border-radius: 2px; }
         .hp-val { height: 100%; background: #0f0; }
 
-        /* Интерфейс высадки */
-        #drop-zone {
-            position: absolute; bottom: 110px; width: 100%; height: calc(100% - 110px);
-            z-index: 40; display: none;
-        }
-        .valid-zone { position: absolute; bottom: 0; width: 100%; height: 45%; background: rgba(0,255,255,0.05); }
+        #drop-zone { position: absolute; bottom: 110px; width: 100%; height: calc(100% - 110px); z-index: 40; display: none; }
+        .valid-zone { position: absolute; bottom: 0; width: 100%; height: 45%; background: rgba(0,255,255,0.05); border-top: 1px dashed var(--neon-blue); }
 
-        /* Карты */
-        #deck {
-            position: absolute; bottom: 0; width: 100%; height: 110px;
-            background: var(--glass); display: flex; justify-content: space-around;
-            align-items: center; border-top: 2px solid var(--neon-blue); z-index: 50;
-        }
-        .card {
-            width: 75px; height: 90px; background: rgba(255,255,255,0.05);
-            border: 2px solid var(--neon-blue); border-radius: 10px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.2s; position: relative;
-        }
-        .card.selected { background: var(--neon-blue); color: #000; transform: translateY(-10px); box-shadow: 0 0 20px var(--neon-blue); }
+        #deck { position: absolute; bottom: 0; width: 100%; height: 110px; background: var(--glass); display: flex; justify-content: space-around; align-items: center; border-top: 2px solid var(--neon-blue); z-index: 50; }
+        .card { width: 75px; height: 90px; background: rgba(255,255,255,0.05); border: 2px solid var(--neon-blue); border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; }
+        .card.selected { background: var(--neon-blue); color: #000; transform: translateY(-10px); }
         .card.disabled { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
-        .cost-badge { position: absolute; top: -10px; right: -10px; background: var(--neon-purple); width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; border: 2px solid #fff;}
+        .cost-badge { position: absolute; top: -10px; right: -10px; background: var(--neon-purple); width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid #fff; }
 
-        /* Экраны */
-        .screen {
-            position: absolute; inset: 0; z-index: 200;
-            background: rgba(0,0,0,0.95); display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
-            backdrop-filter: blur(10px); text-align: center; padding: 20px;
-        }
+        #elixir-bar { position: absolute; bottom: 110px; width: 0%; height: 6px; background: var(--neon-purple); z-index: 51; }
         .hidden { display: none !important; }
 
-        h1 { font-size: 2.5rem; margin-bottom: 10px; }
-        .win-text { color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); }
-        .lose-text { color: var(--neon-pink); text-shadow: 0 0 20px var(--neon-pink); }
-
-        .btn-group { display: flex; gap: 15px; margin-top: 30px; }
-        button {
-            padding: 12px 25px; background: none; border: 2px solid var(--neon-blue);
-            color: var(--neon-blue); font-family: 'Orbitron'; font-weight: 900;
-            border-radius: 5px; cursor: pointer; transition: 0.3s;
-        }
+        button { padding: 12px 25px; background: none; border: 2px solid var(--neon-blue); color: var(--neon-blue); font-family: 'Orbitron'; font-weight: 900; border-radius: 5px; cursor: pointer; }
         button:hover { background: var(--neon-blue); color: #000; }
 
-        #elixir-bar { position: absolute; bottom: 110px; width: 0%; height: 6px; background: var(--neon-purple); box-shadow: 0 0 10px var(--neon-purple); z-index: 51; transition: 0.1s; }
+        @keyframes flare { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        @keyframes load { from { width: 0; } to { width: 100%; } }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div class="arena"><div class="grid-line"></div></div>
-
-    <div id="start-screen" class="screen">
-        <h1 class="win-text">ASTRO ROYALE</h1>
-        <p>SELECT YOUR DECK:</p>
-        <div class="btn-group">
-            <button onclick="pickDeck('balanced')">BALANCED</button>
-            <button onclick="pickDeck('rush')">RUSH</button>
-        </div>
-        <button style="margin-top:20px; width:100%" onclick="pickDeck('heavy')">HEAVY TITANS</button>
+    <div id="loader-screen" class="screen">
+        <div class="logo-box">ASTRO</div>
+        <div class="loader-bar"><div class="loader-fill"></div></div>
+        <p style="font-size: 10px; margin-top: 10px; letter-spacing: 2px;">SYNCING WITH SATELLITE...</p>
     </div>
+
+    <div id="name-screen" class="screen hidden">
+        <h1 style="color:var(--neon-blue)">IDENTIFY</h1>
+        <p>ENTER YOUR PILOT TAG</p>
+        <input type="text" id="nick-input" placeholder="COMMANDER_01" maxlength="12">
+        <button onclick="saveName()">CONFIRM</button>
+    </div>
+
+    <div id="select-screen" class="screen hidden">
+        <h2 style="color:var(--neon-purple)">SELECT 3 UNITS</h2>
+        <div class="fighter-grid" id="fighter-list"></div>
+        <button id="start-btn" class="hidden" onclick="initBattle()">START BATTLE</button>
+    </div>
+
+    <div class="arena"><div class="grid-line"></div></div>
+    <div id="player-tag" class="nickname-tag"></div>
+    <div id="p-base" class="base player-base">🛡️</div>
+    <div id="e-base" class="base enemy-base">💀</div>
+    <div id="elixir-bar"></div>
+    <div id="drop-zone"><div class="valid-zone"></div></div>
+    <div id="deck"></div>
 
     <div id="end-screen" class="screen hidden">
         <h1 id="end-title">VICTORY</h1>
-        <p id="end-msg">Enemy base annihilated!</p>
         <div class="btn-group">
-            <button onclick="location.reload()">MAIN MENU</button>
-            <button onclick="restartGame()">PLAY AGAIN</button>
+            <button onclick="location.reload()">MENU</button>
         </div>
     </div>
-
-    <div id="p-base" class="base player-base">🛡️</div>
-    <div id="e-base" class="base enemy-base">💀</div>
-
-    <div id="elixir-bar"></div>
-    <div id="drop-zone"><div class="valid-zone"></div></div>
-
-    <div id="deck"></div>
 </div>
 
 <script>
-    const cont = document.getElementById('game-container');
-    const dropZone = document.getElementById('drop-zone');
-    const deckEl = document.getElementById('deck');
-    
+    const unitData = {
+        scout: { hp: 120, dmg: 15, spd: 2, cost: 2, icon: '🛸', desc: 'Fast & Weak' },
+        frigate: { hp: 350, dmg: 35, spd: 1.2, cost: 4, icon: '🚀', desc: 'Balanced' },
+        titan: { hp: 900, dmg: 70, spd: 0.7, cost: 7, icon: '🛰️', desc: 'Heavy Tank' },
+        raider: { hp: 200, dmg: 25, spd: 2.5, cost: 3, icon: '⚡', desc: 'Quick Strike' },
+        drone: { hp: 80, dmg: 40, spd: 1.5, cost: 3, icon: '🐝', desc: 'High Damage' }
+    };
+
+    let myNick = "";
+    let mySelection = [];
     let gameActive = false;
     let elixir = 5;
     let units = [];
     let pBaseHp = 1000, eBaseHp = 1000;
     let selectedType = null;
 
-    const unitTypes = {
-        scout: { hp: 120, dmg: 15, spd: 2, cost: 2, icon: '🛸' },
-        frigate: { hp: 350, dmg: 35, spd: 1.2, cost: 4, icon: '🚀' },
-        titan: { hp: 900, dmg: 70, spd: 0.7, cost: 7, icon: '🛰️' },
-        raider: { hp: 200, dmg: 25, spd: 2.5, cost: 3, icon: '⚡' }
-    };
+    // Таймер загрузки
+    setTimeout(() => {
+        document.getElementById('loader-screen').classList.add('hidden');
+        document.getElementById('name-screen').classList.remove('hidden');
+    }, 3000);
 
-    const decks = {
-        balanced: ['scout', 'frigate', 'titan'],
-        rush: ['scout', 'raider', 'frigate'],
-        heavy: ['frigate', 'titan', 'titan']
-    };
+    function saveName() {
+        const val = document.getElementById('nick-input').value;
+        myNick = val || "COMMANDER";
+        document.getElementById('player-tag').innerText = myNick;
+        document.getElementById('name-screen').classList.add('hidden');
+        document.getElementById('select-screen').classList.remove('hidden');
+        renderSelection();
+    }
 
-    function pickDeck(d) {
-        currentDeck = decks[d];
+    function renderSelection() {
+        const list = document.getElementById('fighter-list');
+        for (let key in unitData) {
+            const u = unitData[key];
+            const div = document.createElement('div');
+            div.className = 'fighter-item';
+            div.innerHTML = `<div style="font-size:30px">${u.icon}</div><div style="font-size:10px">${key.toUpperCase()}</div>`;
+            div.onclick = () => {
+                if (mySelection.includes(key)) {
+                    mySelection = mySelection.filter(item => item !== key);
+                    div.classList.remove('active');
+                } else if (mySelection.length < 3) {
+                    mySelection.push(key);
+                    div.classList.add('active');
+                }
+                document.getElementById('start-btn').classList.toggle('hidden', mySelection.length < 3);
+            };
+            list.appendChild(div);
+        }
+    }
+
+    function initBattle() {
+        document.getElementById('select-screen').classList.add('hidden');
         renderDeck();
-        document.getElementById('start-screen').classList.add('hidden');
-        startGame();
+        gameActive = true;
+        update();
+        setInterval(() => {
+            if(gameActive) spawn(Object.keys(unitData)[Math.floor(Math.random()*5)], true, Math.random()*300 + 50, 100);
+        }, 4000);
     }
 
     function renderDeck() {
-        deckEl.innerHTML = '';
-        currentDeck.forEach(type => {
-            const t = unitTypes[type];
+        const d = document.getElementById('deck');
+        mySelection.forEach(type => {
+            const t = unitData[type];
             const card = document.createElement('div');
             card.className = 'card';
-            card.innerHTML = `<span style="font-size:24px">${t.icon}</span><div class="cost-badge">${t.cost}</div><div style="font-size:8px; margin-top:5px">${type.toUpperCase()}</div>`;
+            card.innerHTML = `<span style="font-size:24px">${t.icon}</span><div class="cost-badge">${t.cost}</div>`;
             card.onclick = () => selectCard(type, card);
-            deckEl.appendChild(card);
+            d.appendChild(card);
         });
     }
 
     function selectCard(type, el) {
-        if(elixir < unitTypes[type].cost) return;
+        if(elixir < unitData[type].cost) return;
         document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
         if(selectedType === type) {
             selectedType = null;
-            dropZone.style.display = 'none';
+            document.getElementById('drop-zone').style.display = 'none';
         } else {
             selectedType = type;
             el.classList.add('selected');
-            dropZone.style.display = 'block';
+            document.getElementById('drop-zone').style.display = 'block';
         }
     }
 
-    dropZone.onclick = (e) => {
+    document.getElementById('drop-zone').onclick = (e) => {
         if(!selectedType) return;
-        const rect = cont.getBoundingClientRect();
-        const y = e.clientY - rect.top;
+        const rect = document.getElementById('game-container').getBoundingClientRect();
         const x = e.clientX - rect.left;
-
-        // Можно ставить только на нижней половине (своя территория)
+        const y = e.clientY - rect.top;
         if(y > rect.height * 0.55 && y < rect.height - 110) {
             spawn(selectedType, false, x - 15, y - 15);
-            elixir -= unitTypes[selectedType].cost;
+            elixir -= unitData[selectedType].cost;
             selectedType = null;
-            dropZone.style.display = 'none';
+            document.getElementById('drop-zone').style.display = 'none';
             document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
         }
     };
 
     function spawn(type, isEnemy, x, y) {
-        const t = unitTypes[type];
+        const t = unitData[type];
         const u = { id: Math.random(), type, hp: t.hp, maxHp: t.hp, isEnemy, x, y, el: null };
-        
         const div = document.createElement('div');
         div.className = 'unit';
-        div.innerHTML = `<div class="hp-bar"><div class="hp-val" style="width:100%"></div></div><span style="font-size:24px">${t.icon}</span>`;
+        div.innerHTML = `<div class="hp-bar"><div class="hp-val" style="width:100%"></div></div><span>${t.icon}</span>`;
         if(isEnemy) div.style.transform = 'rotate(180deg)';
         u.el = div;
-        cont.appendChild(div);
+        document.getElementById('game-container').appendChild(div);
         units.push(u);
-    }
-
-    function startGame() {
-        gameActive = true;
-        pBaseHp = 1000; eBaseHp = 1000;
-        update();
-        setInterval(() => {
-            if(gameActive) spawn(currentDeck[Math.floor(Math.random()*3)], true, Math.random()*(cont.offsetWidth-40), 100);
-        }, 4000);
-    }
-
-    function restartGame() {
-        units.forEach(u => u.el.remove());
-        units = [];
-        elixir = 5;
-        document.getElementById('end-screen').classList.add('hidden');
-        gameActive = true;
-    }
-
-    function showEnd(win) {
-        gameActive = false;
-        const screen = document.getElementById('end-screen');
-        const title = document.getElementById('end-title');
-        title.innerText = win ? "VICTORY" : "DEFEAT";
-        title.className = win ? "win-text" : "lose-text";
-        document.getElementById('end-msg').innerText = win ? "You conquered the sector!" : "Your base was destroyed...";
-        screen.classList.remove('hidden');
     }
 
     function update() {
         if(!gameActive) return;
-
         if(elixir < 10) elixir += 0.02;
         document.getElementById('elixir-bar').style.width = (elixir * 10) + '%';
 
-        document.querySelectorAll('.card').forEach((c, i) => {
-            if(elixir < unitTypes[currentDeck[i]].cost) c.classList.add('disabled');
-            else c.classList.remove('disabled');
-        });
-
         units.forEach((u, i) => {
-            const config = unitTypes[u.type];
+            const config = unitData[u.type];
             const dir = u.isEnemy ? 1 : -1;
             let target = null;
 
-            // Ищем ближайшего врага
             units.forEach(other => {
                 if(u.isEnemy !== other.isEnemy) {
                     const d = Math.hypot(u.x - other.x, u.y - other.y);
-                    if(d < 60) target = other;
+                    if(d < 50) target = other;
                 }
             });
 
             if(target) {
-                target.hp -= config.dmg / 30;
+                target.hp -= config.dmg / 25;
             } else {
-                const distToBase = u.isEnemy ? (cont.offsetHeight - 200 - u.y) : (u.y - 110);
+                const distToBase = u.isEnemy ? (document.getElementById('game-container').offsetHeight - 200 - u.y) : (u.y - 110);
                 if(Math.abs(distToBase) < 30) {
                     if(u.isEnemy) pBaseHp -= config.dmg/20; else eBaseHp -= config.dmg/20;
                 } else {
@@ -280,16 +269,16 @@
 
             u.el.style.transform = `translate(${u.x}px, ${u.y}px) ${u.isEnemy ? 'rotate(180deg)' : ''}`;
             u.el.querySelector('.hp-val').style.width = (u.hp/u.maxHp*100)+'%';
-
             if(u.hp <= 0) { u.el.remove(); units.splice(i, 1); }
         });
 
-        if(pBaseHp <= 0) showEnd(false);
-        if(eBaseHp <= 0) showEnd(true);
-
+        if(pBaseHp <= 0 || eBaseHp <= 0) {
+            gameActive = false;
+            document.getElementById('end-screen').classList.remove('hidden');
+            document.getElementById('end-title').innerText = pBaseHp <= 0 ? "DEFEAT" : "VICTORY";
+        }
         requestAnimationFrame(update);
     }
 </script>
-
 </body>
 </html>
